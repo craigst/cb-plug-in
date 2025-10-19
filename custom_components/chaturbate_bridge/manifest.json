@@ -2,11 +2,9 @@
   "domain": "chaturbate_bridge",
   "name": "Chaturbate Bridge",
   "version": "7.6.0",
-  "documentation": "https://github.com/YOUR_USERNAME/chaturbate-bridge",
-  "issue_tracker": "https://github.com/YOUR_USERNAME/chaturbate-bridge/issues",
   "requirements": [],
   "codeowners": [
-    "@YOUR_USERNAME"
+    "@CXS"
   ],
   "iot_class": "cloud_polling",
   "config_flow": true,
