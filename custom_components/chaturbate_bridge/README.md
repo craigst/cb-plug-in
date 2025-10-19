@@ -66,4 +66,4 @@ Stream public Chaturbate rooms directly into Home Assistant using go2rtc. The in
 - Please include linting/formatting updates and describe validation steps in the PR.
 
 ## License
-Released under the MIT License. See [LICENSE](../LICENSE) for details.
+Released under the MIT License. See [LICENSE](../../LICENSE) for details.
