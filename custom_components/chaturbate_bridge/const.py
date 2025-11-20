@@ -1,7 +1,7 @@
 """Constants for the Chaturbate Bridge integration."""
 
 DOMAIN = "chaturbate_bridge"
-INTEGRATION_VERSION = "7.7.0"
+INTEGRATION_VERSION = "7.7.1"
 
 DEFAULT_GO2RTC_URL = "http://127.0.0.1:1984"
 DEFAULT_PUBLIC_GO2RTC_BASE = DEFAULT_GO2RTC_URL

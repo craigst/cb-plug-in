@@ -33,7 +33,7 @@ class FileManager:
         """Initialize the file manager."""
         self.hass = hass
         self._local_path = Path(local_path)
-        self._remote_path = Path(remote_path) if remote_path else None
+        self._remote_path = Path(remote_path) if remote_path and remote_path.strip() else None
         self._enable_auto_move = enable_auto_move and self._remote_path is not None
         self._nas_check_interval = nas_check_interval
         self._auto_cleanup = auto_cleanup
@@ -64,7 +64,9 @@ class FileManager:
         self._stats.update(data.get("stats", {}))
         
         # Ensure local directory exists
-        self._local_path.mkdir(parents=True, exist_ok=True)
+        await self.hass.async_add_executor_job(
+            lambda: self._local_path.mkdir(parents=True, exist_ok=True)
+        )
         
         # Start the background task
         self._running = True
