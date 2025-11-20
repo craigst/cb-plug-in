@@ -81,11 +81,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    
-    # Load storage sensor separately
-    from .storage_sensor import async_setup_entry as setup_storage_sensor
-    await setup_storage_sensor(hass, entry, lambda entities: None)
-    
     entry.async_on_unload(entry.add_update_listener(async_update_listener))
     _LOGGER.info("Chaturbate Bridge v%s set up with models: %s; go2rtc=%s",
                  INTEGRATION_VERSION, models, go2rtc_url)
