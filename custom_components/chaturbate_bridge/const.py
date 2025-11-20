@@ -1,7 +1,7 @@
 """Constants for the Chaturbate Bridge integration."""
 
 DOMAIN = "chaturbate_bridge"
-INTEGRATION_VERSION = "7.6.0"
+INTEGRATION_VERSION = "7.7.0"
 
 DEFAULT_GO2RTC_URL = "http://127.0.0.1:1984"
 DEFAULT_PUBLIC_GO2RTC_BASE = DEFAULT_GO2RTC_URL
@@ -15,6 +15,15 @@ DEFAULT_TIMEOUT = 30  # seconds
 MODEL_PLACEHOLDER = "model1, model2"
 MIN_SCAN_INTERVAL = 5
 MAX_SCAN_INTERVAL = 300
+
+# Storage management constants
+DEFAULT_LOCAL_RECORD_PATH = "/config/media/chaturbate/local"
+DEFAULT_REMOTE_RECORD_PATH = ""
+DEFAULT_ENABLE_AUTO_MOVE = True
+DEFAULT_NAS_CHECK_INTERVAL = 60  # seconds
+DEFAULT_AUTO_CLEANUP = False
+DEFAULT_RETENTION_DAYS = 30
+DEFAULT_MIN_FREE_SPACE_GB = 10
 
 USER_AGENT = "HA-CB-Bridge/1.0"
 CB_EDGE_URL = "https://chaturbate.com/get_edge_hls_url_ajax/"

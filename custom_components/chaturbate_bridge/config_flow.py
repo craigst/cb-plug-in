@@ -11,6 +11,13 @@ from .const import (
     DEFAULT_PUBLIC_GO2RTC_BASE,
     DEFAULT_RECORD_BASE,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_LOCAL_RECORD_PATH,
+    DEFAULT_REMOTE_RECORD_PATH,
+    DEFAULT_ENABLE_AUTO_MOVE,
+    DEFAULT_NAS_CHECK_INTERVAL,
+    DEFAULT_AUTO_CLEANUP,
+    DEFAULT_RETENTION_DAYS,
+    DEFAULT_MIN_FREE_SPACE_GB,
     DOMAIN,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
@@ -41,6 +48,13 @@ STEP_OPTIONS = vol.Schema({
     ): str,
     vol.Required("record_base", default=DEFAULT_RECORD_BASE): str,
     vol.Required("expose_variants", default=DEFAULT_EXPOSE_VARIANTS): bool,
+    vol.Optional("local_record_path", default=DEFAULT_LOCAL_RECORD_PATH): str,
+    vol.Optional("remote_record_path", default=DEFAULT_REMOTE_RECORD_PATH): str,
+    vol.Optional("enable_auto_move", default=DEFAULT_ENABLE_AUTO_MOVE): bool,
+    vol.Optional("nas_check_interval", default=DEFAULT_NAS_CHECK_INTERVAL): vol.All(int, vol.Range(min=30, max=600)),
+    vol.Optional("auto_cleanup", default=DEFAULT_AUTO_CLEANUP): bool,
+    vol.Optional("retention_days", default=DEFAULT_RETENTION_DAYS): vol.All(int, vol.Range(min=1, max=365)),
+    vol.Optional("min_free_space_gb", default=DEFAULT_MIN_FREE_SPACE_GB): vol.All(int, vol.Range(min=1, max=1000)),
 })
 
 def _normalize_url(url: str) -> str:
@@ -126,25 +140,50 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if errors:
                 return self.async_show_form(
                     step_id="init",
-                    data_schema=STEP_OPTIONS.extend({
-                        vol.Required("models", default=user_input.get("models", "")): str,
-                        vol.Required("expose_variants", default=bool(user_input.get("expose_variants", True))): bool,
-                    }),
+                    data_schema=STEP_OPTIONS,
                     errors=errors,
                 )
             record_base = user_input.get("record_base", DEFAULT_RECORD_BASE)
             record_base = record_base.strip() if isinstance(record_base, str) else DEFAULT_RECORD_BASE
+            
+            local_path = user_input.get("local_record_path", DEFAULT_LOCAL_RECORD_PATH)
+            remote_path = user_input.get("remote_record_path", DEFAULT_REMOTE_RECORD_PATH)
+            
             return self.async_create_entry(title="", data={
                 "models": models,
                 "record_base": record_base or DEFAULT_RECORD_BASE,
-                "expose_variants": bool(user_input["expose_variants"]),
+                "expose_variants": bool(user_input.get("expose_variants", DEFAULT_EXPOSE_VARIANTS)),
+                "local_record_path": local_path.strip() if isinstance(local_path, str) else DEFAULT_LOCAL_RECORD_PATH,
+                "remote_record_path": remote_path.strip() if isinstance(remote_path, str) else DEFAULT_REMOTE_RECORD_PATH,
+                "enable_auto_move": bool(user_input.get("enable_auto_move", DEFAULT_ENABLE_AUTO_MOVE)),
+                "nas_check_interval": int(user_input.get("nas_check_interval", DEFAULT_NAS_CHECK_INTERVAL)),
+                "auto_cleanup": bool(user_input.get("auto_cleanup", DEFAULT_AUTO_CLEANUP)),
+                "retention_days": int(user_input.get("retention_days", DEFAULT_RETENTION_DAYS)),
+                "min_free_space_gb": int(user_input.get("min_free_space_gb", DEFAULT_MIN_FREE_SPACE_GB)),
             })
+        
         current = self.config_entry.options.get("models", self.config_entry.data.get("models", []))
-        expose = self.config_entry.options.get("expose_variants", self.config_entry.data.get("expose_variants", True))
+        expose = self.config_entry.options.get("expose_variants", self.config_entry.data.get("expose_variants", DEFAULT_EXPOSE_VARIANTS))
+        local_path = self.config_entry.options.get("local_record_path", self.config_entry.data.get("local_record_path", DEFAULT_LOCAL_RECORD_PATH))
+        remote_path = self.config_entry.options.get("remote_record_path", self.config_entry.data.get("remote_record_path", DEFAULT_REMOTE_RECORD_PATH))
+        enable_auto_move = self.config_entry.options.get("enable_auto_move", self.config_entry.data.get("enable_auto_move", DEFAULT_ENABLE_AUTO_MOVE))
+        nas_check_interval = self.config_entry.options.get("nas_check_interval", self.config_entry.data.get("nas_check_interval", DEFAULT_NAS_CHECK_INTERVAL))
+        auto_cleanup = self.config_entry.options.get("auto_cleanup", self.config_entry.data.get("auto_cleanup", DEFAULT_AUTO_CLEANUP))
+        retention_days = self.config_entry.options.get("retention_days", self.config_entry.data.get("retention_days", DEFAULT_RETENTION_DAYS))
+        min_free_space = self.config_entry.options.get("min_free_space_gb", self.config_entry.data.get("min_free_space_gb", DEFAULT_MIN_FREE_SPACE_GB))
+        
         return self.async_show_form(
             step_id="init",
-            data_schema=STEP_OPTIONS.extend({
+            data_schema=vol.Schema({
                 vol.Required("models", default=", ".join(current)): str,
+                vol.Required("record_base", default=self.config_entry.options.get("record_base", self.config_entry.data.get("record_base", DEFAULT_RECORD_BASE))): str,
                 vol.Required("expose_variants", default=expose): bool,
+                vol.Optional("local_record_path", default=local_path): str,
+                vol.Optional("remote_record_path", default=remote_path): str,
+                vol.Optional("enable_auto_move", default=enable_auto_move): bool,
+                vol.Optional("nas_check_interval", default=nas_check_interval): vol.All(int, vol.Range(min=30, max=600)),
+                vol.Optional("auto_cleanup", default=auto_cleanup): bool,
+                vol.Optional("retention_days", default=retention_days): vol.All(int, vol.Range(min=1, max=365)),
+                vol.Optional("min_free_space_gb", default=min_free_space): vol.All(int, vol.Range(min=1, max=1000)),
             })
         )
