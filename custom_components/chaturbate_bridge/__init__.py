@@ -25,6 +25,8 @@ from .const import (
 )
 from .coordinator import ChaturbateCoordinator
 from .file_manager import FileManager
+from .location_manager import LocationManager
+from .web_ui import ChaturbateBridgeWebView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,9 +73,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     await file_manager.async_start()
 
+    # Initialize location manager if enabled
+    location_manager = None
+    enable_location_manager = entry.options.get("enable_location_manager", entry.data.get("enable_location_manager", False))
+    if enable_location_manager:
+        location_manager = LocationManager(hass)
+        await location_manager.async_load()
+
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coord,
         "file_manager": file_manager,
+        "location_manager": location_manager,
         "models": models,
         "go2rtc_url": go2rtc_url,
         "scan_interval": scan_interval,
@@ -82,10 +92,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "public_go2rtc_base": public_go2rtc_base,
         "expose_variants": expose_variants,
         "auto_convert_mp4": entry.options.get("auto_convert_mp4", entry.data.get("auto_convert_mp4", DEFAULT_AUTO_CONVERT_MP4)),
+        "enable_location_manager": enable_location_manager,
         "camera_created": set(),
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    
+    # Register web UI
+    hass.http.register_view(ChaturbateBridgeWebView(hass))
+    
     entry.async_on_unload(entry.add_update_listener(async_update_listener))
     _LOGGER.info("Chaturbate Bridge v%s set up with models: %s; go2rtc=%s",
                  INTEGRATION_VERSION, models, go2rtc_url)
@@ -99,6 +114,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await data["coordinator"].async_close()
         if "file_manager" in data:
             await data["file_manager"].async_stop()
+        if "location_manager" in data and data["location_manager"]:
+            await data["location_manager"].async_save()
     return unload_ok
 
 async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

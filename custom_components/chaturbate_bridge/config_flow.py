@@ -60,6 +60,7 @@ STEP_OPTIONS = vol.Schema({
     vol.Optional("min_free_space_gb", default=DEFAULT_MIN_FREE_SPACE_GB): vol.All(int, vol.Range(min=1, max=1000)),
     vol.Optional("preferred_quality", default=DEFAULT_PREFERRED_QUALITY): vol.In(["best", "720p", "480p", "360p", "240p"]),
     vol.Optional("auto_convert_mp4", default=DEFAULT_AUTO_CONVERT_MP4): bool,
+    vol.Optional("enable_location_manager", default=False): bool,
 })
 
 def _normalize_url(url: str) -> str:
@@ -168,6 +169,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 "min_free_space_gb": int(user_input.get("min_free_space_gb", DEFAULT_MIN_FREE_SPACE_GB)),
                 "preferred_quality": user_input.get("preferred_quality", DEFAULT_PREFERRED_QUALITY),
                 "auto_convert_mp4": bool(user_input.get("auto_convert_mp4", DEFAULT_AUTO_CONVERT_MP4)),
+                "enable_location_manager": bool(user_input.get("enable_location_manager", False)),
             })
         
         current = self.config_entry.options.get("models", self.config_entry.data.get("models", []))
@@ -197,5 +199,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional("min_free_space_gb", default=min_free_space): vol.All(int, vol.Range(min=1, max=1000)),
                 vol.Optional("preferred_quality", default=preferred_quality): vol.In(["best", "720p", "480p", "360p", "240p"]),
                 vol.Optional("auto_convert_mp4", default=auto_convert_mp4): bool,
+                vol.Optional("enable_location_manager", default=False): bool,
             })
         )
