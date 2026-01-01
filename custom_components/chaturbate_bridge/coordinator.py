@@ -1,6 +1,6 @@
 
 from __future__ import annotations
-import logging, asyncio, json
+import logging, asyncio, json, re
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional
 import aiohttp
@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     CB_EDGE_URL,
     DEFAULT_TIMEOUT,
+    DEFAULT_PREFERRED_QUALITY,
     GO2RTC_STREAM_ENDPOINT,
     INTEGRATION_TITLE,
     USER_AGENT,
@@ -53,11 +54,17 @@ class ChaturbateCoordinator(DataUpdateCoordinator[Dict[str, ModelState]]):
         self.mode = mode
         self.public_go2rtc_base = public_go2rtc_base.rstrip("/") if public_go2rtc_base else ""
         self.expose_variants = expose_variants
-        self._timeout = aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)
-        self._session = aiohttp.ClientSession(timeout=self._timeout)
+        self.preferred_quality = DEFAULT_PREFERRED_QUALITY
+        self._timeout: aiohttp.ClientTimeout | None = None
+        self._session: aiohttp.ClientSession | None = None
         self._last_status: Dict[str, str] = {}
         self._active_streams: Dict[str, List[str]] = {}
         self._streams_endpoint = f"{self.go2rtc_url}{GO2RTC_STREAM_ENDPOINT}"
+
+    async def async_setup(self):
+        from homeassistant.helpers.aiohttp_client import async_get_clientsession
+        self._session = async_get_clientsession(self.hass)
+        self._timeout = aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)
 
     @property
     def request_timeout(self) -> aiohttp.ClientTimeout:
@@ -150,7 +157,11 @@ class ChaturbateCoordinator(DataUpdateCoordinator[Dict[str, ModelState]]):
                     if not vurl.startswith("#"):
                         absurl = urljoin(master_url, vurl)
                         variants.append(Variant(bw, res, absurl))
-        variants.sort(key=lambda v: (v.bandwidth, _res_key(v.resolution)))
+        if self.preferred_quality == "best":
+            variants.sort(key=lambda v: (-v.bandwidth, -_res_to_num(v.resolution)))
+        else:
+            target = _res_to_num(self.preferred_quality)
+            variants.sort(key=lambda v: (abs(_res_to_num(v.resolution) - target), -v.bandwidth))
         return variants
 
     async def _upsert_variants(self, model: str, variants: List[Variant]) -> List[str]:
@@ -237,3 +248,7 @@ def _res_key(res: str):
         except (TypeError, ValueError):
             return 0
     return 0
+
+def _res_to_num(res: str) -> int:
+    m = re.search(r'(\d+)p?', res)
+    return int(m.group(1)) if m else 0

@@ -70,3 +70,24 @@ class FFmpegRecorder:
 
     def pid(self) -> Optional[int]:
         return self.process.pid if self.is_running() else None
+
+    async def convert_to_mp4(self, mkv_path: Path) -> Optional[Path]:
+        mp4_path = mkv_path.with_suffix('.mp4')
+        cmd = ["ffmpeg", "-i", str(mkv_path), "-c", "copy", "-movflags", "+faststart", str(mp4_path)]
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        try:
+            await asyncio.wait_for(process.wait(), timeout=300)  # 5 min timeout
+            if process.returncode == 0:
+                return mp4_path
+            else:
+                return None
+        except asyncio.TimeoutError:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+            return None

@@ -18,6 +18,8 @@ from .const import (
     DEFAULT_AUTO_CLEANUP,
     DEFAULT_RETENTION_DAYS,
     DEFAULT_MIN_FREE_SPACE_GB,
+    DEFAULT_PREFERRED_QUALITY,
+    DEFAULT_AUTO_CONVERT_MP4,
     DOMAIN,
     MAX_SCAN_INTERVAL,
     MIN_SCAN_INTERVAL,
@@ -38,6 +40,7 @@ STEP_USER = vol.Schema({
     ): str,
     vol.Optional("public_go2rtc_base", default=DEFAULT_PUBLIC_GO2RTC_BASE): str,
     vol.Required("expose_variants", default=DEFAULT_EXPOSE_VARIANTS): bool,
+    vol.Optional("preferred_quality", default=DEFAULT_PREFERRED_QUALITY): vol.In(["best", "720p", "480p", "360p", "240p"]),
 })
 
 STEP_OPTIONS = vol.Schema({
@@ -55,6 +58,8 @@ STEP_OPTIONS = vol.Schema({
     vol.Optional("auto_cleanup", default=DEFAULT_AUTO_CLEANUP): bool,
     vol.Optional("retention_days", default=DEFAULT_RETENTION_DAYS): vol.All(int, vol.Range(min=1, max=365)),
     vol.Optional("min_free_space_gb", default=DEFAULT_MIN_FREE_SPACE_GB): vol.All(int, vol.Range(min=1, max=1000)),
+    vol.Optional("preferred_quality", default=DEFAULT_PREFERRED_QUALITY): vol.In(["best", "720p", "480p", "360p", "240p"]),
+    vol.Optional("auto_convert_mp4", default=DEFAULT_AUTO_CONVERT_MP4): bool,
 })
 
 def _normalize_url(url: str) -> str:
@@ -116,6 +121,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "models": models,
             "public_go2rtc_base": _normalize_url(public_base_raw or go2rtc_url or DEFAULT_PUBLIC_GO2RTC_BASE),
             "expose_variants": bool(user_input["expose_variants"]),
+            "preferred_quality": user_input.get("preferred_quality", DEFAULT_PREFERRED_QUALITY),
         }
         return self.async_create_entry(title="Chaturbate Bridge", data=data)
 
@@ -160,6 +166,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 "auto_cleanup": bool(user_input.get("auto_cleanup", DEFAULT_AUTO_CLEANUP)),
                 "retention_days": int(user_input.get("retention_days", DEFAULT_RETENTION_DAYS)),
                 "min_free_space_gb": int(user_input.get("min_free_space_gb", DEFAULT_MIN_FREE_SPACE_GB)),
+                "preferred_quality": user_input.get("preferred_quality", DEFAULT_PREFERRED_QUALITY),
+                "auto_convert_mp4": bool(user_input.get("auto_convert_mp4", DEFAULT_AUTO_CONVERT_MP4)),
             })
         
         current = self.config_entry.options.get("models", self.config_entry.data.get("models", []))
@@ -171,6 +179,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         auto_cleanup = self.config_entry.options.get("auto_cleanup", self.config_entry.data.get("auto_cleanup", DEFAULT_AUTO_CLEANUP))
         retention_days = self.config_entry.options.get("retention_days", self.config_entry.data.get("retention_days", DEFAULT_RETENTION_DAYS))
         min_free_space = self.config_entry.options.get("min_free_space_gb", self.config_entry.data.get("min_free_space_gb", DEFAULT_MIN_FREE_SPACE_GB))
+        preferred_quality = self.config_entry.options.get("preferred_quality", self.config_entry.data.get("preferred_quality", DEFAULT_PREFERRED_QUALITY))
+        auto_convert_mp4 = self.config_entry.options.get("auto_convert_mp4", self.config_entry.data.get("auto_convert_mp4", DEFAULT_AUTO_CONVERT_MP4))
         
         return self.async_show_form(
             step_id="init",
@@ -185,5 +195,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional("auto_cleanup", default=auto_cleanup): bool,
                 vol.Optional("retention_days", default=retention_days): vol.All(int, vol.Range(min=1, max=365)),
                 vol.Optional("min_free_space_gb", default=min_free_space): vol.All(int, vol.Range(min=1, max=1000)),
+                vol.Optional("preferred_quality", default=preferred_quality): vol.In(["best", "720p", "480p", "360p", "240p"]),
+                vol.Optional("auto_convert_mp4", default=auto_convert_mp4): bool,
             })
         )

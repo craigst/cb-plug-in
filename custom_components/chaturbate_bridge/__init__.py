@@ -7,6 +7,7 @@ from homeassistant.const import Platform
 from .const import (
     DOMAIN,
     INTEGRATION_VERSION,
+    DEFAULT_AUTO_CONVERT_MP4,
     DEFAULT_GO2RTC_URL,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_MODE,
@@ -20,6 +21,7 @@ from .const import (
     DEFAULT_AUTO_CLEANUP,
     DEFAULT_RETENTION_DAYS,
     DEFAULT_MIN_FREE_SPACE_GB,
+    DEFAULT_PREFERRED_QUALITY,
 )
 from .coordinator import ChaturbateCoordinator
 from .file_manager import FileManager
@@ -52,6 +54,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         public_go2rtc_base=public_go2rtc_base,
         expose_variants=expose_variants
     )
+    coord.preferred_quality = entry.options.get("preferred_quality", entry.data.get("preferred_quality", DEFAULT_PREFERRED_QUALITY))
+    await coord.async_setup()
     await coord.async_config_entry_first_refresh()
 
     # Initialize file manager
@@ -77,6 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "record_base": entry.data.get("record_base", DEFAULT_RECORD_BASE),
         "public_go2rtc_base": public_go2rtc_base,
         "expose_variants": expose_variants,
+        "auto_convert_mp4": entry.options.get("auto_convert_mp4", entry.data.get("auto_convert_mp4", DEFAULT_AUTO_CONVERT_MP4)),
         "camera_created": set(),
     }
 

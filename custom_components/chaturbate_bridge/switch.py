@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.storage import Store
 
 from .const import (
+    DEFAULT_AUTO_CONVERT_MP4,
     DEFAULT_GO2RTC_URL,
     DEFAULT_PUBLIC_GO2RTC_BASE,
     DEFAULT_RECORD_BASE,
